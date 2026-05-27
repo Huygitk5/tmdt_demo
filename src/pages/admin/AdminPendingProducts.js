@@ -11,9 +11,8 @@ const AdminPendingProducts = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(false);
     
-    // State cho Modal Reject
     const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
-    const [selectedProductId, setSelectedProductId] = useState(null);
+    const [selectedPpId, setSelectedPpId] = useState(null);
     const [form] = Form.useForm();
 
     useEffect(() => {
@@ -23,10 +22,8 @@ const AdminPendingProducts = () => {
     const fetchPendingProducts = async () => {
         setLoading(true);
         try {
-            // Gọi API lấy danh sách đang chờ duyệt (truyền param status=PENDING)
             const res = await adminService.getProducts({ status: 'PENDING' });
             if (res.success) {
-                // Tùy theo cấu trúc trả về của PageResponse (backend)
                 setProducts(res.data.content || res.data || []);
             }
         } catch (error) {
@@ -36,34 +33,31 @@ const AdminPendingProducts = () => {
         }
     };
 
-    // Xử lý Duyệt
-    const handleApprove = async (id) => {
+    const handleApprove = async (ppId) => {
         try {
-            const res = await adminService.approveProduct(id);
+            const res = await adminService.approveProduct(ppId);
             if (res.success) {
                 message.success('Đã duyệt sản phẩm thành công!');
-                fetchPendingProducts(); // Load lại danh sách
+                fetchPendingProducts(); 
             }
         } catch (error) {
             message.error(error.response?.data?.message || 'Lỗi khi duyệt sản phẩm');
         }
     };
 
-    // Mở Modal Từ chối
-    const openRejectModal = (id) => {
-        setSelectedProductId(id);
+    const openRejectModal = (ppId) => {
+        setSelectedPpId(ppId);
         setIsRejectModalOpen(true);
     };
 
-    // Submit form Từ chối
     const handleRejectSubmit = async (values) => {
         try {
-            const res = await adminService.rejectProduct(selectedProductId, { reason: values.reason });
+            const res = await adminService.rejectProduct(selectedPpId, { reason: values.reason });
             if (res.success) {
                 message.success('Đã từ chối sản phẩm!');
                 setIsRejectModalOpen(false);
                 form.resetFields();
-                fetchPendingProducts(); // Load lại danh sách
+                fetchPendingProducts(); 
             }
         } catch (error) {
             message.error(error.response?.data?.message || 'Lỗi khi từ chối sản phẩm');
@@ -73,51 +67,59 @@ const AdminPendingProducts = () => {
     const columns = [
         {
             title: 'ID Duyệt',
-            dataIndex: 'id',
-            key: 'id',
-            width: 80,
+            key: 'ppId',
+            width: 100,
+            // Tìm trong mảng platforms lấy ra ID của record PENDING
+            render: (_, record) => record.platforms?.find(p => p.status === 'PENDING')?.id || '-'
         },
         {
             title: 'Tên sản phẩm',
-            dataIndex: ['product', 'name'],
+            dataIndex: 'name',
             key: 'productName',
             render: (text) => <b>{text}</b>
         },
         {
             title: 'Giá bán',
-            dataIndex: ['product', 'price'],
+            dataIndex: 'price',
             key: 'price',
             render: (price) => `${price}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' đ'
         },
         {
             title: 'Ngày gửi',
-            dataIndex: 'submittedAt',
             key: 'submittedAt',
-            render: (date) => new Date(date).toLocaleString('vi-VN')
+            render: (_, record) => {
+                const pp = record.platforms?.find(p => p.status === 'PENDING');
+                return pp?.submittedAt ? new Date(pp.submittedAt).toLocaleString('vi-VN') : '-';
+            }
         },
         {
             title: 'Hành động',
             key: 'action',
-            render: (_, record) => (
-                <Space size="middle">
-                    <Button 
-                        type="primary" 
-                        style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
-                        icon={<CheckCircleOutlined />} 
-                        onClick={() => handleApprove(record.id)}
-                    >
-                        Duyệt
-                    </Button>
-                    <Button 
-                        type="primary" 
-                        danger 
-                        icon={<CloseCircleOutlined />} 
-                        onClick={() => openRejectModal(record.id)}
-                    >
-                        Từ chối
-                    </Button>
-                </Space>
-            )
+            render: (_, record) => {
+                const pp = record.platforms?.find(p => p.status === 'PENDING');
+                if (!pp) return null; // Nếu không tìm thấy ID duyệt thì ẩn nút
+                
+                return (
+                    <Space size="middle">
+                        <Button 
+                            type="primary" 
+                            style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+                            icon={<CheckCircleOutlined />} 
+                            onClick={() => handleApprove(pp.id)}
+                        >
+                            Duyệt
+                        </Button>
+                        <Button 
+                            type="primary" 
+                            danger 
+                            icon={<CloseCircleOutlined />} 
+                            onClick={() => openRejectModal(pp.id)}
+                        >
+                            Từ chối
+                        </Button>
+                    </Space>
+                );
+            }
         }
     ];
 
@@ -132,7 +134,6 @@ const AdminPendingProducts = () => {
                 pagination={{ pageSize: 10 }}
             />
 
-            {/* Modal Từ Chối */}
             <Modal
                 title="Từ chối sản phẩm"
                 open={isRejectModalOpen}

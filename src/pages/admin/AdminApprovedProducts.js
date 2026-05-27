@@ -1,6 +1,6 @@
 // src/pages/admin/AdminApprovedProducts.js
 import React, { useState, useEffect } from 'react';
-import { Table, Card, Button, Typography, Space, Popconfirm, message } from 'antd';
+import { Table, Card, Button, Typography, Popconfirm, message } from 'antd';
 import { StopOutlined } from '@ant-design/icons';
 import { adminService } from '../../services/adminService';
 
@@ -17,7 +17,6 @@ const AdminApprovedProducts = () => {
     const fetchApprovedProducts = async () => {
         setLoading(true);
         try {
-            // Lấy danh sách sản phẩm có trạng thái APPROVED
             const res = await adminService.getProducts({ status: 'APPROVED' });
             if (res.success) {
                 setProducts(res.data.content || res.data || []);
@@ -29,12 +28,12 @@ const AdminApprovedProducts = () => {
         }
     };
 
-    const handleRemove = async (id) => {
+    const handleRemove = async (ppId) => {
         try {
-            const res = await adminService.removeProduct(id);
+            const res = await adminService.removeProduct(ppId);
             if (res.success) {
                 message.success('Đã gỡ sản phẩm khỏi sàn thành công!');
-                fetchApprovedProducts(); // Load lại bảng
+                fetchApprovedProducts(); 
             }
         } catch (error) {
             message.error(error.response?.data?.message || 'Lỗi khi gỡ sản phẩm');
@@ -44,44 +43,51 @@ const AdminApprovedProducts = () => {
     const columns = [
         {
             title: 'ID Duyệt',
-            dataIndex: 'id',
-            key: 'id',
-            width: 80,
+            key: 'ppId',
+            width: 100,
+            render: (_, record) => record.platforms?.find(p => p.status === 'APPROVED')?.id || '-'
         },
         {
             title: 'Tên sản phẩm',
-            dataIndex: ['product', 'name'],
+            dataIndex: 'name',
             key: 'productName',
             render: (text) => <b>{text}</b>
         },
         {
             title: 'Giá bán',
-            dataIndex: ['product', 'price'],
+            dataIndex: 'price',
             key: 'price',
             render: (price) => `${price}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' đ'
         },
         {
             title: 'Ngày duyệt',
-            dataIndex: 'reviewedAt',
             key: 'reviewedAt',
-            render: (date) => date ? new Date(date).toLocaleString('vi-VN') : '-'
+            render: (_, record) => {
+                const pp = record.platforms?.find(p => p.status === 'APPROVED');
+                return pp?.reviewedAt ? new Date(pp.reviewedAt).toLocaleString('vi-VN') : '-';
+            }
         },
         {
             title: 'Hành động',
             key: 'action',
-            render: (_, record) => (
-                <Popconfirm 
-                    title="Gỡ sản phẩm vi phạm?" 
-                    description="Sản phẩm này sẽ bị xóa khỏi sàn của bạn."
-                    onConfirm={() => handleRemove(record.id)}
-                    okText="Đồng ý Gỡ"
-                    cancelText="Hủy"
-                >
-                    <Button danger icon={<StopOutlined />}>
-                        Gỡ khỏi sàn
-                    </Button>
-                </Popconfirm>
-            )
+            render: (_, record) => {
+                const pp = record.platforms?.find(p => p.status === 'APPROVED');
+                if (!pp) return null;
+                
+                return (
+                    <Popconfirm 
+                        title="Gỡ sản phẩm vi phạm?" 
+                        description="Sản phẩm này sẽ bị xóa khỏi sàn của bạn."
+                        onConfirm={() => handleRemove(pp.id)}
+                        okText="Đồng ý Gỡ"
+                        cancelText="Hủy"
+                    >
+                        <Button danger icon={<StopOutlined />}>
+                            Gỡ khỏi sàn
+                        </Button>
+                    </Popconfirm>
+                );
+            }
         }
     ];
 

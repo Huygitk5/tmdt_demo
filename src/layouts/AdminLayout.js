@@ -15,7 +15,7 @@ const AdminLayout = () => {
     const { user } = useSelector(state => state.auth);
 
     const menuItems = [
-        { key: '/admin/dashboard', icon: <DashboardOutlined />, label: 'Dashboard' },
+        // { key: '/admin/dashboard', icon: <DashboardOutlined />, label: 'Dashboard' },
         { key: '/admin/products/pending', icon: <SafetyCertificateOutlined />, label: 'Duyệt Sản Phẩm' },
         { key: '/admin/products/approved', icon: <CheckCircleOutlined />, label: 'Quản Lý SP Đang Bán' },
     ];
