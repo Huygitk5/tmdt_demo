@@ -21,6 +21,8 @@ import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -126,5 +128,28 @@ public class AdminService {
         }
 
         return modelMapper.map(pp.getProduct(), ProductResponse.class);
+    }
+
+    public PageResponse<ProductResponse> getPendingAndApprovedProducts(int page, int size) {
+        AdminProfile profile = getAdminProfile();
+        Pageable pageable = PageRequest.of(page, size);
+
+        // Tạo danh sách các trạng thái cần lọc
+        List<ProductStatus> statuses = Arrays.asList(ProductStatus.PENDING, ProductStatus.APPROVED);
+
+        // Gọi xuống repository
+        Page<ProductPlatform> ppPage = productPlatformRepository.findByPlatformIdAndStatusIn(
+                profile.getPlatform().getId(), statuses, pageable);
+
+        List<ProductResponse> products = ppPage.getContent().stream()
+                .map(pp -> modelMapper.map(pp.getProduct(), ProductResponse.class))
+                .collect(Collectors.toList());
+
+        return PageResponse.<ProductResponse>builder()
+                .content(products)
+                .page(ppPage.getNumber())
+                .size(ppPage.getSize())
+                .total(ppPage.getTotalElements())
+                .build();
     }
 }

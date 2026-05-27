@@ -47,4 +47,18 @@ public class AdminController {
     public ResponseEntity<ApiResponse<ProductResponse>> getProductDetail(@PathVariable Integer id) {
         return ResponseEntity.ok(new ApiResponse<>(true, "Product detail retrieved", adminService.getProductDetail(id)));
     }
+
+    @GetMapping("/pending-and-approved")
+    public ResponseEntity<ApiResponse<PageResponse<ProductResponse>>> getPendingAndApprovedProducts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        PageResponse<ProductResponse> responseData = adminService.getPendingAndApprovedProducts(page, size);
+
+        return ResponseEntity.ok(new ApiResponse<>(
+                true,
+                "Retrieved pending and approved products successfully",
+                responseData
+        ));
+    }
 }
