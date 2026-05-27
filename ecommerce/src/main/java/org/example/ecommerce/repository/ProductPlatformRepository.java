@@ -14,4 +14,5 @@ public interface ProductPlatformRepository extends JpaRepository<ProductPlatform
     List<ProductPlatform> findByProductId(Integer productId);
     Page<ProductPlatform> findByPlatformIdAndStatus(Integer platformId, ProductStatus status, Pageable pageable);
     Page<ProductPlatform> findByPlatformId(Integer platformId, Pageable pageable);
+    Page<ProductPlatform> findByPlatformIdAndStatusIn(Integer platformId, List<ProductStatus> statuses, Pageable pageable);
 }

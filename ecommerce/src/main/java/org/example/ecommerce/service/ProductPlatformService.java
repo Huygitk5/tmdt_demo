@@ -58,4 +58,20 @@ public class ProductPlatformService {
     public void removePlatforms(Integer productId, RemovePlatformsRequest request) {
         // Find ProductPlatform and mark as REMOVED
     }
+
+    @Transactional
+    public void resubmitToPlatform(Product product, Integer platformId) {
+        ProductPlatform pp = productPlatformRepository.findByProductId(product.getId()).stream()
+                .filter(p -> p.getPlatform().getId().equals(platformId))
+                .findFirst()
+                .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
+
+        if (pp.getStatus() == ProductStatus.APPROVED || pp.getStatus() == ProductStatus.PENDING) {
+            throw new AppException(ErrorCode.INVALID_INPUT); // Can only resubmit rejected/removed
+        }
+
+        pp.setStatus(ProductStatus.PENDING);
+        pp.setSubmittedAt(LocalDateTime.now());
+        productPlatformRepository.save(pp);
+    }
 }

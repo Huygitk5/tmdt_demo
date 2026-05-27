@@ -26,6 +26,7 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final org.example.ecommerce.repository.ProductImageRepository productImageRepository;
     private final ProductPlatformService productPlatformService;
     private final ModelMapper modelMapper;
 
@@ -82,5 +83,58 @@ public class ProductService {
         }
 
         return modelMapper.map(savedProduct, ProductResponse.class);
+    }
+
+    @Transactional
+    public ProductResponse updateProduct(Integer id, CreateProductRequest request) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
+        
+        if (!product.getCustomer().getId().equals(getCurrentUser().getId())) {
+            throw new AppException(ErrorCode.FORBIDDEN);
+        }
+
+        Category category = categoryRepository.findById(request.getCategory_id())
+                .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
+
+        product.setName(request.getName());
+        product.setDescription(request.getDescription());
+        product.setPrice(request.getPrice());
+        product.setQuantity(request.getQuantity());
+        product.setCategory(category);
+
+        Product savedProduct = productRepository.save(product);
+        return modelMapper.map(savedProduct, ProductResponse.class);
+    }
+
+    @Transactional
+    public void deleteProductImage(Integer productId, Integer imageId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
+        
+        if (!product.getCustomer().getId().equals(getCurrentUser().getId())) {
+            throw new AppException(ErrorCode.FORBIDDEN);
+        }
+
+        ProductImage image = productImageRepository.findById(imageId)
+                .orElseThrow(() -> new AppException(ErrorCode.INVALID_INPUT)); // we could create IMAGE_NOT_FOUND but INVALID_INPUT works
+
+        if (!image.getProduct().getId().equals(productId)) {
+            throw new AppException(ErrorCode.INVALID_INPUT);
+        }
+
+        productImageRepository.delete(image);
+    }
+
+    @Transactional
+    public void resubmitProductPlatform(Integer productId, Integer platformId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
+        
+        if (!product.getCustomer().getId().equals(getCurrentUser().getId())) {
+            throw new AppException(ErrorCode.FORBIDDEN);
+        }
+
+        productPlatformService.resubmitToPlatform(product, platformId);
     }
 }
