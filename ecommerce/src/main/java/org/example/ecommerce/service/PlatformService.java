@@ -23,6 +23,7 @@ import org.example.ecommerce.dto.response.ProductResponse;
 import org.example.ecommerce.entity.ProductPlatform;
 import org.example.ecommerce.enums.ProductStatus;
 import org.example.ecommerce.repository.ProductPlatformRepository;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
