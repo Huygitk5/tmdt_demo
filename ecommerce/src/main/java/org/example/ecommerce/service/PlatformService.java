@@ -15,7 +15,14 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.example.ecommerce.dto.response.PageResponse;
+import org.example.ecommerce.dto.response.ProductResponse;
+import org.example.ecommerce.entity.ProductPlatform;
+import org.example.ecommerce.enums.ProductStatus;
+import org.example.ecommerce.repository.ProductPlatformRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +31,7 @@ public class PlatformService {
     private final PlatformRepository platformRepository;
     private final PlatformExtraFieldRepository extraFieldRepository;
     private final CategoryRepository categoryRepository;
+    private final ProductPlatformRepository productPlatformRepository;
     private final ModelMapper modelMapper;
 
     public List<PlatformResponse> getAllPlatforms() {
@@ -48,5 +56,21 @@ public class PlatformService {
         return categories.stream()
                 .map(c -> modelMapper.map(c, CategoryResponse.class))
                 .collect(Collectors.toList());
+    }
+
+    public PageResponse<ProductResponse> getPlatformProducts(Integer platformId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<ProductPlatform> ppPage = productPlatformRepository.findByPlatformIdAndStatus(platformId, ProductStatus.APPROVED, pageable);
+        
+        List<ProductResponse> products = ppPage.getContent().stream()
+                .map(pp -> modelMapper.map(pp.getProduct(), ProductResponse.class))
+                .collect(Collectors.toList());
+
+        return PageResponse.<ProductResponse>builder()
+                .content(products)
+                .page(ppPage.getNumber())
+                .size(ppPage.getSize())
+                .total(ppPage.getTotalElements())
+                .build();
     }
 }

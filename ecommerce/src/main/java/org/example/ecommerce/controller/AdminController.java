@@ -6,6 +6,9 @@ import org.example.ecommerce.service.AdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.example.ecommerce.dto.response.PageResponse;
+import org.example.ecommerce.dto.response.ProductResponse;
+import org.example.ecommerce.enums.ProductStatus;
 
 @RestController
 @RequestMapping("/api/v1/admin/products")
@@ -30,5 +33,18 @@ public class AdminController {
     public ResponseEntity<ApiResponse<Void>> removeProduct(@PathVariable Integer id) {
         adminService.removeProduct(id);
         return ResponseEntity.ok(new ApiResponse<>(true, "Product removed from platform", null));
+    }
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<PageResponse<ProductResponse>>> getProducts(
+            @RequestParam(required = false) ProductStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(new ApiResponse<>(true, "Products retrieved", adminService.getProducts(status, page, size)));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<ProductResponse>> getProductDetail(@PathVariable Integer id) {
+        return ResponseEntity.ok(new ApiResponse<>(true, "Product detail retrieved", adminService.getProductDetail(id)));
     }
 }

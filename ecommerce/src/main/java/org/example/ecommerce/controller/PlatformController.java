@@ -8,6 +8,8 @@ import org.example.ecommerce.service.PlatformService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.example.ecommerce.dto.response.PageResponse;
+import org.example.ecommerce.dto.response.ProductResponse;
 
 import java.util.List;
 
@@ -36,5 +38,13 @@ public class PlatformController {
     @GetMapping("/{id}/categories")
     public ResponseEntity<ApiResponse<List<CategoryResponse>>> getCategories(@PathVariable Integer id) {
         return ResponseEntity.ok(new ApiResponse<>(true, "Categories retrieved", platformService.getCategories(id)));
+    }
+
+    @GetMapping("/{id}/products")
+    public ResponseEntity<ApiResponse<PageResponse<ProductResponse>>> getPlatformProducts(
+            @PathVariable Integer id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(new ApiResponse<>(true, "Products retrieved", platformService.getPlatformProducts(id, page, size)));
     }
 }
